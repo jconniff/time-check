@@ -50,6 +50,39 @@ body {
 .selected .bar {
     background-color: rgba(37,107,68,1);    
 }
+.selected .face-a:after,
+.selected .face-b:after {
+    content: "";
+    background-image: url(bubble.png);
+    background-size: 100%;
+    width: 50px;
+    height: 39px;
+    display: block;
+    position: absolute;
+    left: 80%;
+    opacity: 0.5;
+   
+    -webkit-transition: opacity 1s; 
+    transition: opacity 1s;
+     /**/
+}
+.face-a:after,
+.face-b:after {
+    content: "";
+    background-image: url(bubble.png);
+    background-size: 100%;
+    width: 50px;
+    height: 39px;
+    display: block;
+    position: absolute;
+    left: 80%;
+    opacity: 0;
+    -webkit-transition: opacity 1s; /* For Safari 3.1 to 6.0 */
+    transition: opacity 1s;
+}
+body .block .timezup {
+    background-color: #7b0000;
+}
 .grid {
     height: 1em;
     position: absolute;
@@ -63,7 +96,7 @@ body {
 }
 .btn-pause {
     cursor: pointer;
-    margin: 1em;
+    margin: 1em 1em 3em;
     display: inline-block;
     padding: 0.5em 0.8em 0.2em;
     text-align: center;
@@ -71,7 +104,7 @@ body {
     color: #A0A0A0;
     width: 2.5em;
     background-color: #444141;
-    border-radius: 0.5em;
+    border-radius: 0.2em;
 }
 .btn-pause .icon {
     margin: auto;
@@ -90,6 +123,7 @@ body {
 .minutes-container {
     display: inline-block;
     font-size: 1.4em;
+    margin-right: 2em;
     vertical-align: text-bottom;
 }
 #minutes-total {
@@ -97,11 +131,14 @@ body {
     background-color: #7B7B7B;
 }
 .btn-reset {
-    display: block;
-    text-align: right;
-    font-size: 1.4em;
-    margin-right: 1em;
+    display: inline-block;
+    font-size: 0.8em;
+    vertical-align: text-bottom;
     cursor: pointer;
+    padding: 0.6em 0.8em;
+    background-color: #444141;
+    border-radius: 0.2em;
+    margin: 0 0 0 0.9em;
 }
 </style>
 <body>
@@ -123,8 +160,8 @@ body {
 <div class="minutes-container">
     Stay
     <select id="minutes-total">
-      <option value="0.1">.1</option>
-      <option value="5" selected>5</option>
+      <option value="0.1" selected>.1</option>
+      <option value="5">5</option>
       <option value="15">15</option>
       <option value="20">20</option>
       <option value="25">25</option>
@@ -142,7 +179,7 @@ body {
 <script>
 YUI().use('node', 'overlay', 'node-event-delegate', 'event-tap', function (Y) {
     // clicking on a thumbnail displays it's image in the main .pics image
-    var minutesPerVisit = 5,       
+    var minutesPerVisit = 0.1,       
         bar,
         blockA = Y.one(".block-a"),
         blockB = Y.one(".block-b"),
@@ -172,7 +209,7 @@ YUI().use('node', 'overlay', 'node-event-delegate', 'event-tap', function (Y) {
                     bar.setStyle("width", newWidth + "%");                        
                     incrementer();
                 }else{
-                    bar.setStyle("background-color", "#7b0000");
+                    bar.addClass("timezup");
                     node = (node == blockA)? blockB : blockA; // switch the active block
                     switchSelected(node);
                     count(node);   
@@ -229,6 +266,7 @@ YUI().use('node', 'overlay', 'node-event-delegate', 'event-tap', function (Y) {
     Y.one('body').delegate("tap", function(e) {        
         clearTimeout(timer);
         Y.all(".block").removeClass("selected");
+        Y.all(".block .bar").removeClass("timezup");
         e.currentTarget.removeClass("selected-pause");
         percentA = 0;
         percentB = 0;       
