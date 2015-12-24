@@ -1,0 +1,286 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Time</title>
+    <script src="https://yui-s.yahooapis.com/3.18.1/build/yui/yui-min.js"></script>
+</head>
+<style>
+body {
+    margin: 0;
+    background-color: #302D28;
+    color: #888;
+    font-family: arial;
+}
+.block {
+    display: inline-block;
+    width: 100%;
+    height: 7em;
+    cursor: pointer;
+    opacity: 0.5   
+}
+.face-a, .face-b {
+    position: absolute;
+    border-radius: 50%;
+    border: solid 2px #8A7777;
+    box-shadow: 5px 5px 5px rgba(0,0,0,0.2);
+    width: 6em;
+    height: 6em;
+    margin: 0.4em 1em;
+    text-align: center;
+    line-height: 1em;
+    background-color: #fff;
+    background-size: 100%; 
+}
+.face-a {
+    background-image: url(jerry.png); 
+}
+.face-b {
+    background-image: url(jeff.png);
+}
+.selected {
+    opacity: 1;
+}
+.bar {
+    height: 7em;
+    background-color: rgba(130, 100, 100, 1);
+    width: 0%;
+}
+.selected .bar {
+    background-color: rgba(37,107,68,1);    
+}
+.grid {
+    height: 1em;
+    position: absolute;
+    z-index: -10;
+}
+.ticks {
+    height: 22.6em;
+    margin-top: -8em;
+    border-right: solid 1px #3E3B3B;
+    display: inline-block;
+}
+.btn-pause {
+    cursor: pointer;
+    margin: 1em;
+    display: inline-block;
+    padding: 0.5em 0.8em 0.2em;
+    text-align: center;
+    font-size: 0.8em;
+    color: #A0A0A0;
+    width: 2.5em;
+    background-color: #444141;
+    border-radius: 0.5em;
+}
+.btn-pause .icon {
+    margin: auto;
+    height: 1em;
+    width: 0.3em;
+    border-left: solid 0.4em #888;
+    border-right: solid 0.4em #888;
+    margin-bottom: 0.2em;
+}
+.selected-pause {
+    background-color: #756E6E;
+}
+.selected-pause .icon {
+    border-color: #fff;
+}
+.minutes-container {
+    display: inline-block;
+    font-size: 1.4em;
+    vertical-align: text-bottom;
+}
+#minutes-total {
+    font-size: inherit;
+    background-color: #7B7B7B;
+}
+.btn-reset {
+    display: block;
+    text-align: right;
+    font-size: 1.4em;
+    margin-right: 1em;
+    cursor: pointer;
+}
+</style>
+<body>
+<div class="grid"></div>
+
+    <div class="block block-a">
+        <div class="face-a"></div>
+        <div class="bar">
+            
+        </div>    
+    </div><div class="block block-b">
+        <div class="face-b"></div>
+        <div class="bar">
+            
+        </div>    
+    </div>
+<a class="button btn-pause"><div class="icon"></div>Pause</a>
+
+<div class="minutes-container">
+    Stay
+    <select id="minutes-total">
+      <option value="0.1">.1</option>
+      <option value="5" selected>5</option>
+      <option value="15">15</option>
+      <option value="20">20</option>
+      <option value="25">25</option>
+      <option value="30">30</option>
+      <option value="35">35</option>
+      <option value="40">40</option>
+      <option value="45">45</option>
+      <option value="50">50</option>
+      <option value="55">55</option>
+      <option value="60">60</option>
+    </select>
+    Minutes
+</div>
+<a class="btn-reset">Reset</a>
+<script>
+YUI().use('node', 'overlay', 'node-event-delegate', 'event-tap', function (Y) {
+    // clicking on a thumbnail displays it's image in the main .pics image
+    var minutesPerVisit = 5,       
+        bar,
+        blockA = Y.one(".block-a"),
+        blockB = Y.one(".block-b"),
+        percentA = 0,
+        percentB = 0,
+        timer,
+        blockWidth = parseInt(Y.one(".block").getStyle("width")),
+        barPercentSecond,
+      
+      
+    count = function(node) {
+        var bar = node.one(".bar"),
+            curBlock = (node.hasClass("block-a") ? "a" : "b");
+        incrementer = function() {
+            timer = setTimeout(function(){            
+                var newWidth;
+
+                if(curBlock === "a") {
+                    newWidth = (percentA + barPercentSecond);
+                    percentA = newWidth;
+                }else{
+                    newWidth = (percentB + barPercentSecond);
+                    percentB = newWidth;                    
+                }
+                
+                if( newWidth <= 100){
+                    bar.setStyle("width", newWidth + "%");                        
+                    incrementer();
+                }else{
+                    bar.setStyle("background-color", "#7b0000");
+                    node = (node == blockA)? blockB : blockA; // switch the active block
+                    switchSelected(node);
+                    count(node);   
+                }
+            },1000);                
+        };
+        incrementer();
+    },
+    
+    // change the appearance of selected bar
+    switchSelected = function(node){
+      Y.all(".block").removeClass("selected");
+      Y.one(".btn-pause").removeClass("selected-pause");
+      node.addClass("selected");            
+    },
+    
+    // draw the grid for bars
+    drawGrid = function(){
+        blockWidth = parseInt(Y.one(".block").getStyle("width"));
+        var ticks = minutesPerVisit / 2,
+            gridO = Y.one(".grid"),
+            wide = ((blockWidth - ticks)/ ticks);
+            gridO.setContent("");
+        for (var i = 0; i < Math.floor(ticks); i = i+1 ){
+            gridO.append("<div class='ticks' style=width:" + wide + "px;></div>");
+        }          
+    },
+    
+    // set barPercentSecond value
+    setBarPercentSecond = function(){
+        var secondsPerVisitPerPerson = (minutesPerVisit / 2) * 60;
+        barPercentSecond = (1 / secondsPerVisitPerPerson) * 100;
+    };
+    setBarPercentSecond();
+    drawGrid();
+        
+        
+    
+    Y.one('body').delegate("tap", function(e) {        
+        var node = e.currentTarget;
+        switchSelected(node);
+        clearTimeout(timer);
+        count(node);
+    }, ".block");
+    
+    // Pause timer
+    Y.one('body').delegate("tap", function(e) {        
+        clearTimeout(timer);
+        Y.all(".block").removeClass("selected");
+        e.currentTarget.addClass("selected-pause");
+    }, ".btn-pause");
+    
+    // Reset time to zero
+    Y.one('body').delegate("tap", function(e) {        
+        clearTimeout(timer);
+        Y.all(".block").removeClass("selected");
+        e.currentTarget.removeClass("selected-pause");
+        percentA = 0;
+        percentB = 0;       
+        blockA.one(".bar").setStyle("width", "0%");
+        blockB.one(".bar").setStyle("width", "0%");
+    }, ".btn-reset");
+    
+    
+    // draw the grid per the total minutes of visit
+    Y.on('resize', function(){
+        drawGrid();
+        setBarPercentSecond();
+    });
+    
+    // set up total minutes timer variable
+    Y.one("#minutes-total").on('change', function(e){
+        //clearTimeout(timer);
+        var m = document.getElementById("minutes-total"),
+            minutesElapsedA = percentA * minutesPerVisit,
+            minutesElapsedB = percentB * minutesPerVisit;
+            
+        minutesPerVisit = m.options[m.selectedIndex].value;
+        percentA = minutesElapsedA / minutesPerVisit;        
+        percentB = minutesElapsedB / minutesPerVisit;        
+        setBarPercentSecond();
+        blockA.one(".bar").setStyle("width", percentA + "%");
+        blockB.one(".bar").setStyle("width", percentB + "%");
+        drawGrid();
+    });
+    
+    
+    // old code
+    /*
+            currentThumb = allThumbs.indexOf(node);
+            clearTimeout(timerPic);
+            a.setAttribute('src', url);
+            a.removeClass('pic-hide');
+            allThumbs.removeClass('selected');
+            node.addClass('selected');
+            timerPic = setTimeout(function(){
+                b.setAttribute('src', url);
+                a.addClass('pic-hide');
+            },500);
+            overlay.hide();
+            domOverlay.addClass('faded');
+            Y.one('.note').setHTML(picArr[allThumbs.indexOf(node)].note);
+            setNavArrowState();
+    */
+    
+
+ 
+});
+</script>
+</body>
+</html>
